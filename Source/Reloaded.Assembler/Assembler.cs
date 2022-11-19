@@ -42,6 +42,9 @@ namespace Reloaded.Assembler
         /// <summary>
         /// Creates a new instance of the FASM assembler.
         /// </summary>
+        /// <param name="basePath">
+        ///     The directory of the FASM DLLs.
+        /// </param>
         /// <param name="textSize">
         ///     The minimum size of the buffer to be used for passing the
         ///     text to be assembled to FASM Assembler.
@@ -50,7 +53,7 @@ namespace Reloaded.Assembler
         ///     The minimum size of the buffer to be used for FASM to return the
         ///     text to be assembled.
         /// </param>
-        public Assembler(int textSize = 0x10000, int resultSize = 0x8000)
+        public Assembler(DirectoryInfo basePath, int textSize = 0x10000, int resultSize = 0x8000)
         {
             // Attempt allocation of memory X times.
             AllocateText(textSize, 3);
@@ -59,7 +62,7 @@ namespace Reloaded.Assembler
             IntPtr fasmDllHandle;
 
             // Get path of FASM dll
-            string fasmDllPath = GetFasmDLLPath();
+            string fasmDllPath = GetFasmDLLPath(basePath);
             fasmDllHandle = LoadLibraryW(fasmDllPath);
 
             // Throw exception if dll not loaded.
@@ -175,39 +178,21 @@ namespace Reloaded.Assembler
         /// <summary>
         /// Retrieves the path of the FASM dll to load.
         /// </summary>
-        private string GetFasmDLLPath()
+        private string GetFasmDLLPath(DirectoryInfo basePath)
         {
             const string FASM86DLL = "FASM.dll";
             const string FASM64DLL = "FASMX64.dll";
 
-            // Check current directory.
-            if (IntPtr.Size == 4 && File.Exists(FASM86DLL))
-                return FASM86DLL;
-            else if (IntPtr.Size == 8 && File.Exists(FASM64DLL))
-                return FASM64DLL;
-
             // Check DLL Directory
-            string assemblyDirectory = GetExecutingDLLDirectory();
-            string asmDirectoryFasm86 = Path.Combine(assemblyDirectory, FASM86DLL);
-            string asmDirectoryFasm64 = Path.Combine(assemblyDirectory, FASM64DLL);
+            string fasm86Path = Path.Combine(basePath.FullName, FASM86DLL);
+            string fasm64Path = Path.Combine(basePath.FullName, FASM64DLL);
 
-            if (IntPtr.Size == 4 && File.Exists(asmDirectoryFasm86))
-                return asmDirectoryFasm86;
-            else if (IntPtr.Size == 8 && File.Exists(asmDirectoryFasm64))
-                return asmDirectoryFasm64;
+            if (IntPtr.Size == 4 && File.Exists(fasm86Path))
+                return fasm86Path;
+            else if (IntPtr.Size == 8 && File.Exists(fasm64Path))
+                return fasm64Path;
 
-            throw new FasmWrapperException("Appropriate FASM DLL for X86/64 has not been found in either current or library directory.");
-        }
-
-        /// <summary>
-        /// Gets the directory of the currently executing assembly.
-        /// </summary>
-        private string GetExecutingDLLDirectory()
-        {
-            string codeBase = Assembly.GetExecutingAssembly().CodeBase;
-            UriBuilder uri = new UriBuilder(codeBase);
-            string path = Uri.UnescapeDataString(uri.Path);
-            return Path.GetDirectoryName(path);
+            throw new FasmWrapperException($"Appropriate FASM DLL for X86/64 has not been found in {basePath.FullName}.");
         }
 
         /// <summary>

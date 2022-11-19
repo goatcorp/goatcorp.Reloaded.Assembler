@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Threading;
 using Reloaded.Assembler.Definitions;
 using Reloaded.Memory.Buffers.Internal.Kernel32;
@@ -21,12 +23,23 @@ namespace Reloaded.Assembler.Tests
          *
          * An assumption is made that FASM is stable ;)
          */
+        
+        /// <summary>
+        /// Gets the directory of the currently executing assembly.
+        /// </summary>
+        private static DirectoryInfo GetExecutingDLLDirectory()
+        {
+            string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+            UriBuilder uri = new UriBuilder(codeBase);
+            string path = Uri.UnescapeDataString(uri.Path);
+            return new DirectoryInfo(Path.GetDirectoryName(path) ?? string.Empty);
+        }
 
         [Fact]
         public void GetVersion()
         {
             // TODO: Remember to change version every time you update FASM.
-            var asm = new Assembler();
+            var asm = new Assembler(GetExecutingDLLDirectory());
             Version version = asm.GetVersion();
             Assert.Equal(1, version.Major);
             Assert.Equal(73, version.Minor);
@@ -35,7 +48,7 @@ namespace Reloaded.Assembler.Tests
         [Fact]
         public void AssembleMnemonics()
         {
-            var asm = new Assembler();
+            var asm = new Assembler(GetExecutingDLLDirectory());
             string[] mnemonics = new[]
             {
                 "use32",
@@ -84,7 +97,7 @@ namespace Reloaded.Assembler.Tests
         [Fact]
         public void AssembleException()
         {
-            var asm = new Assembler();
+            var asm = new Assembler(GetExecutingDLLDirectory());
             string[] mnemonics = new[]
             {
                 "use32",
@@ -108,7 +121,7 @@ namespace Reloaded.Assembler.Tests
         [Fact]
         public void AssembleFile()
         {
-            var asm = new Assembler();
+            var asm = new Assembler(GetExecutingDLLDirectory());
             var exe64 = asm.AssembleFile("PE64DEMO.ASM");
             var exe32 = asm.AssembleFile("PEDEMO.ASM");
         }
@@ -117,7 +130,7 @@ namespace Reloaded.Assembler.Tests
         public void AssembleOutOfTextMemory()
         {
             // Text and return buffer size will be rounded up.
-            var asm = new Assembler(0x0, 0x0);
+            var asm = new Assembler(GetExecutingDLLDirectory(), 0x0, 0x0);
 
             // Create a huge thing to assemble.
             List<string> mnemonics = new List<string>(10000);
