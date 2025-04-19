@@ -12,7 +12,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Authors>Sewer56</Authors>
+    <Authors>Sewer56, goatcorp Contributors</Authors>
     <Product>Reloaded</Product>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Description>Minimal .NET wrapper around the simple, easy to use Flat Assembler written by Tomasz Grysztar. Supports both x64 and x86 development.</Description>
@@ -22,7 +22,7 @@
     <PackageIconUrl></PackageIconUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Reloaded-Project/Reloaded.Assembler</RepositoryUrl>
-    <Version>1.0.14-goatcorp2</Version>
+    <Version>1.0.14-goatcorp3</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>Icon.png</PackageIcon>
 
