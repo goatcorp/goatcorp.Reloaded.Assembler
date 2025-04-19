@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>goatcorp.Reloaded.Assembler</PackageId>
     <TargetFrameworks>
       netstandard2.0;
       net5.0;
@@ -16,13 +17,12 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb;.dll</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Description>Minimal .NET wrapper around the simple, easy to use Flat Assembler written by Tomasz Grysztar. Supports both x64 and x86 development.</Description>
     <Copyright>LGPL V3</Copyright>
-    <PackageId>goaaats.Reloaded.Assembler</PackageId>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/Reloaded-Project/Reloaded.Assembler</PackageProjectUrl>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Reloaded-Project/Reloaded.Assembler</RepositoryUrl>
-    <Version>1.0.14-goat.2</Version>
+    <Version>1.0.14-goatcorp2</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>Icon.png</PackageIcon>
 
@@ -39,7 +39,7 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <None Include="goaaats.Reloaded.Assembler.targets" Pack="true" PackagePath="build" />
+    <None Include="goatcorp.Reloaded.Assembler.targets" Pack="true" PackagePath="build" />
     <None Include="FASM-LICENSE.TXT" Pack="true" PackagePath="build">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -52,6 +52,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Reloaded.Memory.Buffers" Version="2.0.0" />
+    <PackageReference Include="goatcorp.Reloaded.Memory.Buffers" Version="2.0.0-goatcorp6" />
   </ItemGroup>
 </Project>
