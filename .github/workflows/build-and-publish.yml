@@ -2,17 +2,17 @@ name: Build and Publish
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, modified ]
     tags:
       - '*'
   pull_request:
-    branches: [ master ]
+    branches: [ master, modified ]
   workflow_dispatch:
 
 env: 
-  COVERAGE_PATH: ./Publish/Coverage.xml 
-  PUBLISH_CHANGELOG_PATH: ./Publish/Changelog.md 
-  PUBLISH_PATH: ./Publish
+  CODE_COVERAGE_PATH: ./Coverage.xml
+  SOLUTION_PATH: ./source/Reloaded.Assembler.sln
+  NUPKG_GLOB: ./source/Reloaded.Assembler/bin/Release/*.nupkg
   IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/') }}
   RELEASE_TAG: ${{ github.ref_name }}
 
@@ -24,110 +24,41 @@ jobs:
         shell: pwsh
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         
-    - name: Setup .NET Core SDK
-      uses: actions/setup-dotnet@v1.9.0
+    - name: Setup .NET Core SDK (6.0.x)
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.x'
-        
-    - name: Print Environment Variables
-      run: |
-        echo "Changelog Path: $env:PUBLISH_CHANGELOG_PATH"
-        echo "Publish Path: $env:PUBLISH_PATH"
-        echo "Is Release?: $env:IS_RELEASE"
-        echo "Release Tag: $env:RELEASE_TAG"
-    
-    # Required for C#10 features.
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - name: Setup AutoChangelog
-      run: npm install -g auto-changelog
+        # Optional SDK version(s) to use. If not provided, will install global.json version when available. Examples: 2.2.104, 3.1, 3.1.x
+        dotnet-version: 9.0.x
     
     - name: Get Dotnet Info
       run: dotnet --info
       
-    - name: Publish
-      run: | 
-        [System.IO.Directory]::CreateDirectory("$env:PUBLISH_PATH")
-        dotnet build -c Release ./Source/Reloaded.Assembler.sln
+    - name: Build
+      run: dotnet build -c Release "$env:SOLUTION_PATH"
       
     - name: Test
-      run: dotnet test -c Release ./Source/Reloaded.Assembler.Tests/Reloaded.Assembler.Tests.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput="../../$env:COVERAGE_PATH" /p:Exclude="[xunit.*]*"
-     
-    - name: Create NuGet Package Artifacts
       run: |
-        $items = Get-ChildItem -Path "." -Recurse | Where-Object { $_.Name -match "\.nupkg" }
-        foreach ($item in $items)
-        {
-          Write-Host "Moving $item -> $env:PUBLISH_PATH"
-          Move-Item -Path "$item" -Destination "$env:PUBLISH_PATH"
-        }
-      
-    - name: Create Changelog (on Tag)
-      run: |
-        if ($env:IS_RELEASE -eq 'true') 
-        {
-            auto-changelog --sort-commits date --hide-credit --template keepachangelog --commit-limit false --unreleased --starting-version "$env:RELEASE_TAG" --output "$env:PUBLISH_CHANGELOG_PATH"
-        }
-        else 
-        {
-            auto-changelog --sort-commits date --hide-credit --template keepachangelog --commit-limit false --unreleased --output "$env:PUBLISH_CHANGELOG_PATH"
-        }
+           dotnet test $env:SOLUTION_PATH /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput="../../$env:CODE_COVERAGE_PATH"
         
-    - name: Upload NuGet Artifact
-      uses: actions/upload-artifact@v2.2.4
+    - name: Upload NuGet Package Artifact
+      uses: actions/upload-artifact@v4
       with:
         # Artifact name
-        name: Library
+        name: NuGet Packages
         # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ env.PUBLISH_PATH }}/*.nupkg
-        retention-days: 0
-        
-    - name: Upload Changelog Artifact
-      uses: actions/upload-artifact@v2.2.4
-      with:
-        # Artifact name
-        name: Changelog
-        # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ env.PUBLISH_CHANGELOG_PATH }}
-        retention-days: 0
-        
-    - name: Upload Coverage Artifact
-      uses: actions/upload-artifact@v2.2.4
-      with:
-        # Artifact name
-        name: Coverage
-        # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ env.COVERAGE_PATH }}
-        retention-days: 0
-    
-    - name: Upload to GitHub Releases
-      uses: softprops/action-gh-release@v0.1.14
-      if: env.IS_RELEASE == 'true'
-      with:
-        # Path to load note-worthy description of changes in release from
-        body_path: ${{ env.PUBLISH_CHANGELOG_PATH }}
-        # Newline-delimited list of path globs for asset files to upload
-        files: ${{ env.PUBLISH_PATH }}/*.nupkg
-
-    - name: Codecov
-      uses: codecov/codecov-action@v2.1.0
-      with:
-        # Comma-separated list of files to upload
-        files: ${{ env.COVERAGE_PATH }}
+        path: |
+          ${{ env.NUPKG_GLOB }}
         
     - name: Upload to NuGet (on Tag)
       env: 
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
       if: env.IS_RELEASE == 'true'
       run: |
-        $items = Get-ChildItem -Path "$env:PUBLISH_PATH/*.nupkg"
+        $items = Get-ChildItem -Path "./source/*.nupkg" -Recurse
         Foreach ($item in $items)
         {
             Write-Host "Pushing $item"
